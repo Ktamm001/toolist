@@ -90,10 +90,44 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--work); outl
 .chip.soon { border-color: var(--idea); color: var(--idea); font-weight: 700 }
 li.done .chip { border-color: var(--line); color: var(--muted); font-weight: 400 }
 .meta { align-items: center }
+
+/* Launch splash: logo draws itself, then the list appears */
+#splash { position: fixed; inset: 0; z-index: 100; background: #18222b; display: grid; place-items: center; transition: opacity .4s ease, visibility .4s; cursor: pointer }
+#splash.out { opacity: 0; visibility: hidden }
+.splash-in { display: grid; justify-items: center; gap: 14px }
+#splash svg { width: 132px; height: 132px; overflow: visible }
+#splash .ring { fill: none; stroke-width: 2.6; stroke-dasharray: 44; stroke-dashoffset: 44; animation: draw .45s ease-out forwards }
+#splash .bar { stroke-width: 5; stroke-linecap: round; stroke-dasharray: 42; stroke-dashoffset: 42; animation: draw .5s cubic-bezier(.3,.7,.3,1) forwards }
+#splash .fill { fill: #5cc58a; transform-origin: 27px 30px; transform: scale(0); animation: pop .3s cubic-bezier(.3,1.6,.5,1) .85s forwards }
+#splash .tick { fill: none; stroke: #18222b; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 14; stroke-dashoffset: 14; animation: draw .25s ease-out 1.05s forwards }
+#splash .word { font-family: var(--display); font-weight: 800; font-size: 1.9rem; letter-spacing: -0.02em; color: #e8edf1; opacity: 0; transform: translateY(8px); animation: rise .45s ease-out 1s forwards }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+@keyframes pop { to { transform: scale(1) } }
+@keyframes rise { to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) {
+  #splash .ring, #splash .bar, #splash .tick { animation: none; stroke-dashoffset: 0 }
+  #splash .fill { animation: none; transform: none }
+  #splash .word { animation: none; opacity: 1; transform: none }
+}
 </style>
 
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <div class="splash-in">
+    <svg viewBox="0 0 100 100">
+      <circle class="ring" cx="27" cy="30" r="7" stroke="#5cc58a"/>
+      <circle class="fill" cx="27" cy="30" r="7.5"/>
+      <path class="tick" d="M23.6 30.2l2.4 2.6 4.6-5"/>
+      <circle class="ring" cx="27" cy="50" r="7" stroke="#7fa2ff" style="animation-delay:.12s"/>
+      <circle class="ring" cx="27" cy="70" r="7" stroke="#f0b84a" style="animation-delay:.24s"/>
+      <line class="bar" x1="41" y1="30" x2="80" y2="30" stroke="#93a1ad" style="animation-delay:.3s"/>
+      <line class="bar" x1="41" y1="50" x2="71" y2="50" stroke="#e8edf1" style="animation-delay:.42s"/>
+      <line class="bar" x1="41" y1="70" x2="80" y2="70" stroke="#e8edf1" style="animation-delay:.54s"/>
+    </svg>
+    <div class="word">Töölist</div>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <h1>Minu töölist</h1>
@@ -287,6 +321,13 @@ li.done .chip { border-color: var(--line); color: var(--muted); font-weight: 400
 
   items = local.load(); render();
   note("Kirjed salvestuvad selles seadmes. Tee aeg-ajalt varukoopia.");
+  (() => {
+    const sp = $("#splash");
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const hide = () => { sp.classList.add("out"); setTimeout(() => sp.remove(), 450); };
+    const t = setTimeout(hide, reduce ? 700 : 2300);
+    sp.addEventListener("click", () => { clearTimeout(t); hide(); }, { once: true });
+  })();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
 </script>
